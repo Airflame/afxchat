@@ -394,7 +394,7 @@ def main() -> int:
         finally:
             indicator.stop()
         if 'answer' in locals():
-            print(f"{BOLD}AfxChat>{RESET} {answer}")
+            print(f"\n{BOLD}AfxChat>{RESET} {answer}")
             del answer
 
 
