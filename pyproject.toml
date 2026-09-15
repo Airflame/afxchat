@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "afxchat"
+version = "0.1.0"
+description = "A lightweight CLI client for an LM Studio server on a local network"
+requires-python = ">=3.10"
+dependencies = []
+
+[project.scripts]
+afxchat = "afxchat.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["afxchat*"]
