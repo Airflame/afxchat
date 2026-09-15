@@ -7,6 +7,8 @@ import configparser
 import json
 import os
 import sys
+import threading
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -150,6 +152,31 @@ def save_config(path: Path, cfg: Config) -> None:
 
 class LMStudioError(RuntimeError):
     pass
+
+
+class WaitingIndicator:
+    """Show a small animated indicator while a blocking API request is running."""
+
+    def __init__(self, message: str = "Waiting for LM Studio"):
+        self.message = message
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._run, daemon=True)
+
+    def _run(self) -> None:
+        frames = ("|", "/", "-", "\\")
+        index = 0
+        while not self._stop.is_set():
+            print(f"\r{self.message} {frames[index]}", end="", flush=True)
+            index = (index + 1) % len(frames)
+            self._stop.wait(0.12)
+
+    def start(self) -> None:
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+        self._thread.join(timeout=1.0)
+        print("\r\033[2K", end="", flush=True)
 
 
 class LMStudioClient:
@@ -358,12 +385,17 @@ def main() -> int:
             print("No model selected. Run /model list, then /model set <model-name>.")
             continue
 
+        indicator = WaitingIndicator()
         try:
-            print(f"\n{BOLD}AfxChat>{RESET} ", end="", flush=True)
-            answer, previous_response_id = client.chat(user_input, previous_response_id)
-            print(answer)
+            indicator.start()
+            answer, previous_response_id = client.chat(user_input + cfg.system_prompt, previous_response_id)
         except LMStudioError as exc:
-            print(f"\nError: {exc}", file=sys.stderr)
+            print(f"\r\033[2KError: {exc}", file=sys.stderr)
+        finally:
+            indicator.stop()
+        if 'answer' in locals():
+            print(f"{BOLD}AfxChat>{RESET} {answer}")
+            del answer
 
 
 if __name__ == "__main__":
