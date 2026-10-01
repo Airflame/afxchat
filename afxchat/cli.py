@@ -284,6 +284,24 @@ def print_current_model(model: str) -> None:
     print(f"Current LLM model: {model}")
 
 
+def print_config(cfg: Config) -> None:
+    print(f"{APP_NAME} Configuration:")
+    print(f"  host:          {cfg.host}")
+    print(f"  port:          {cfg.port}")
+    print(f"  model:         {cfg.model or '(not selected)'}")
+    print(f"  temperature:   {cfg.temperature}")
+    print(f"  top_p:         {cfg.top_p}")
+    print(f"  top_k:         {cfg.top_k}")
+    print(f"  min_p:         {cfg.min_p}")
+    print(f"  repeat_penalty: {cfg.repeat_penalty}")
+    print(f"  max_output_tokens: {cfg.max_output_tokens}")
+    print(f"  context_length: {cfg.context_length}")
+    print(f"  reasoning:     {cfg.reasoning}")
+    print(f"  system_prompt: {cfg.system_prompt or '(empty)'}")
+    print(f"  timeout:       {cfg.timeout}s")
+    print(f"  api_token:     {cfg.api_token or '(not set)'}")
+
+
 def choose_model(client: LMStudioClient, cfg: Config, config_path: Path, requested: str) -> None:
     models = client.list_models()
     llms = [m for m in models if m.get("type") == "llm"]
@@ -305,6 +323,7 @@ def print_help() -> None:
         "  /model                  Print the model currently used\n"
         "  /model list             List available LLM models\n"
         "  /model set <model-name> Select and save the model\n"
+        "  /config                 Show current configuration\n"
         "  /help                   Show this help\n"
         "  /quit                   Exit AfxChat\n"
         "\n"
@@ -375,6 +394,13 @@ def main() -> int:
 
         if user_input == "/model":
             print("Usage: /model list | /model set <model-name>")
+            continue
+
+        if user_input == "/config":
+            try:
+                print_config(cfg)
+            except Exception as exc:
+                print(f"Error displaying config: {exc}", file=sys.stderr)
             continue
 
         if user_input.startswith("/"):
