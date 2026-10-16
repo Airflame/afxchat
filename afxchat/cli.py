@@ -267,7 +267,7 @@ def print_models(models: list[dict[str, Any]], current_model: str) -> list[dict[
         return
 
     print("Available LLM models:")
-    for model in llms:
+    for i, model in enumerate(llms, 1):
         key = str(model.get("key", "?"))
         display = str(model.get("display_name", key))
         params = str(model.get("params_string", ""))
@@ -277,7 +277,7 @@ def print_models(models: list[dict[str, Any]], current_model: str) -> list[dict[
         marker = " *" if key == current_model else ""
         suffix_parts = [p for p in (params, quant_name, "loaded" if loaded else "") if p]
         suffix = f" [{', '.join(suffix_parts)}]" if suffix_parts else ""
-        print(f"  {key}{marker} - {display}{suffix}")
+        print(f"  {i} - {key}{marker} - {display}{suffix}")
 
 
 def print_current_model(model: str) -> None:
