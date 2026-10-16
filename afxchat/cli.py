@@ -260,7 +260,7 @@ class LMStudioClient:
         return text, response_id
 
 
-def print_models(models: list[dict[str, Any]], current_model: str) -> None:
+def print_models(models: list[dict[str, Any]], current_model: str) -> list[dict[str, Any]]:
     llms = [m for m in models if m.get("type") == "llm"]
     if not llms:
         print("No LLM models were returned by LM Studio.")
@@ -307,6 +307,17 @@ def choose_model(client: LMStudioClient, cfg: Config, config_path: Path, request
     llms = [m for m in models if m.get("type") == "llm"]
     by_key = {str(m.get("key")): m for m in llms}
 
+    # Check if input is a number
+    try:
+        num = int(requested)
+        if num < 1 or num > len(llms):
+            print(f"Invalid model number: {num}. Please use a number from 1 to {len(llms)}.", file=sys.stderr)
+            print_models(models, cfg.model)
+            return
+        requested = llms[num - 1].get("key", "")
+    except ValueError:
+        pass  # Not a number, treat as model name
+
     if requested not in by_key:
         print(f"Model not found: {requested}", file=sys.stderr)
         print_models(models, cfg.model)
@@ -322,7 +333,7 @@ def print_help() -> None:
         "Commands:\n"
         "  /model                  Print the model currently used\n"
         "  /model list             List available LLM models\n"
-        "  /model set <model-name> Select and save the model\n"
+        "  /model set <num|name>   Select and save a model by number (1-n) or name\n"
         "  /config                 Show current configuration\n"
         "  /help                   Show this help\n"
         "  /quit                   Exit AfxChat\n"
@@ -383,7 +394,7 @@ def main() -> int:
         if user_input.startswith("/model set "):
             requested = user_input[len("/model set "):].strip()
             if not requested:
-                print("Usage: /model set <model-name>")
+                print("Usage: /model set <num|name>")
                 continue
             try:
                 choose_model(client, cfg, config_path, requested)
@@ -393,7 +404,7 @@ def main() -> int:
             continue
 
         if user_input == "/model":
-            print("Usage: /model list | /model set <model-name>")
+            print("Usage: /model list | /model set <num|name>")
             continue
 
         if user_input == "/config":
@@ -408,8 +419,8 @@ def main() -> int:
             continue
 
         if not cfg.model:
-            print("No model selected. Run /model list, then /model set <model-name>.")
-            continue
+            print("No model selected. Run /model list, then /model set <num|name>.")
+
 
         indicator = WaitingIndicator()
         try:
